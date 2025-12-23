@@ -31,29 +31,40 @@ async def main():
         transient=False,
     )
 
-    # ディスパッチャーを作成
-    disp = Dispatcher()
-
     # プログレスバーを描画
     with progress:
-        # 各データ (attention, meditation) ごとのタスクを作成
-        attention_task = progress.add_task("Attention", total=PROGRESS_MAX)
-        meditation_task = progress.add_task("Meditation", total=PROGRESS_MAX)
+        # OSCサーバーを入れるリスト
+        servers = []
 
-        # プログレスバーの数値を更新する関数
-        def update_task(task_id: TaskID, *args):
-            if not args:
-                return
-            progress.update(task_id, completed=args[0])
+        # ポートごとにディスパッチャとタスクを作成し、サーバーを起動
+        for port in PORTS:
+            # ディスパッチャーを作成
+            disp = Dispatcher()
 
-        # アドレスと関数を紐付け
-        disp.map("/Attention", lambda address, *args: update_task(attention_task, *args))
-        disp.map("/Meditation", lambda address, *args: update_task(meditation_task, *args))
+            # タスクを作成（attention, meditation) 
+            attention_task = progress.add_task(f"{port}: Attention", total=PROGRESS_MAX)
+            meditation_task = progress.add_task(f"{port} Meditation", total=PROGRESS_MAX)
 
-        # 複数ポートで OSC サーバーを起動
-        servers = [
-            AsyncIOOSCUDPServer((IP, port), disp, loop) for port in PORTS
-        ]
+            # ハンドラー関数を作成する関数
+            def make_handler(task_id: TaskID):
+                # ハンドラー関数
+                def _handler(address: str, *args):
+                    if not args:
+                        return
+
+                    progress.update(task_id, completed=args[0])
+                
+                # 作成した関数を返す
+                return _handler
+
+            # ディスパッチャに関数を登録
+            disp.map("/Attention", make_handler(attention_task))
+            disp.map("/Meditation", make_handler(meditation_task))
+
+            # サーバーを起動
+            server = AsyncIOOSCUDPServer((IP, port), disp, loop)
+            servers.append(server)
+
         print(f"Listening on {IP} ports: {PORTS}")
 
         # 後でUDP通信を閉じるためのオブジェクト
