@@ -1,3 +1,2 @@
+rich
 python-osc
-PySide6
-pyqtgraph

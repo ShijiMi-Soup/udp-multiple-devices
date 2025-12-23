@@ -71,17 +71,22 @@ class OscWorker(QtCore.QObject):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+
+        # ウィンドウのタイトル
         self.setWindowTitle("OSC Monitor (PySide6 + pyqtgraph)")
 
+        # レイアウトを作成
         central = QtWidgets.QWidget()
         self.setCentralWidget(central)
         layout = QtWidgets.QVBoxLayout(central)
 
+        # プロットをレイアウトに追加
         self.plot = pg.PlotWidget()
         layout.addWidget(self.plot)
         self.curve_9000 = self.plot.plot()
         self.curve_9001 = self.plot.plot()
 
+        # ボタン
         row = QtWidgets.QHBoxLayout()
         self.start_btn = QtWidgets.QPushButton("Start")
         self.stop_btn = QtWidgets.QPushButton("Stop")
@@ -90,9 +95,11 @@ class MainWindow(QtWidgets.QMainWindow):
         row.addWidget(self.stop_btn)
         layout.addLayout(row)
 
+        # データの一時保存先（バッファ）
         self.buf0 = deque(maxlen=500)
         self.buf1 = deque(maxlen=500)
 
+        # OSCサーバー
         self.worker = OscWorker([
             ("0.0.0.0", 9000, ["/a"]),
             ("0.0.0.0", 9001, ["/b"]),
