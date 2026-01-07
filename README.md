@@ -1,63 +1,27 @@
-# OSC Server with Progress Bar Tutorial
+# OSC サーバーとプログレスバーのチュートリアル
 
-This repository contains a step-by-step tutorial for implementing an OSC (Open Sound Control) server with progress bar visualization.
+複数のデバイスからOSCメッセージを受信し、プログレスバーで可視化するチュートリアルです。
 
-## Overview
+## ファイル
 
-Learn how to:
-1. Set up a basic OSC server
-2. Implement an asynchronous OSC server for multiple devices
-3. Visualize received data with progress bars
+- **1_base_server.py** - 基本的なOSCサーバー
+- **2_async_server.py** - 非同期OSCサーバー（複数ポート対応）
+- **3_progressbar.py** - プログレスバー付きOSCサーバー
+- **test_osc_sender.py** - テスト用メッセージ送信スクリプト
+- **TUTORIAL_JA.md** - 詳細なチュートリアル
 
-## Files
-
-- **1_base_server.py** - Basic OSC server (single port)
-- **2_async_server.py** - Asynchronous OSC server (multiple ports)
-- **3_progressbar.py** - OSC server with progress bar visualization
-- **test_osc_sender.py** - Test script to send OSC messages
-- **TUTORIAL_JA.md** - Complete tutorial in Japanese (日本語チュートリアル)
-
-## Quick Start
-
-### Installation
+## 使い方
 
 ```bash
+# 依存パッケージをインストール
 pip install -r requirements.txt
-```
 
-### Running the Examples
-
-#### 1. Basic Server
-```bash
-python 1_base_server.py
-```
-
-#### 2. Async Server
-```bash
-python 2_async_server.py
-```
-
-#### 3. Progress Bar (with test)
-Terminal 1:
-```bash
+# プログレスバーサーバーを起動
 python 3_progressbar.py
-```
 
-Terminal 2:
-```bash
+# 別のターミナルでテストスクリプトを実行
 python test_osc_sender.py
 ```
 
-## Documentation
+詳しい説明は [TUTORIAL_JA.md](./TUTORIAL_JA.md) をご覧ください。
 
-For a detailed Japanese tutorial, see [TUTORIAL_JA.md](./TUTORIAL_JA.md)
-
-## Requirements
-
-- Python 3.7+
-- python-osc
-- rich
-
-## License
-
-MIT
