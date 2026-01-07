@@ -9,7 +9,7 @@ This repository contains Python scripts for handling UDP/OSC (Open Sound Control
 - `1_base_server.py` - Basic threaded OSC UDP server implementation
 - `2_async_server.py` - Async-based OSC server for handling multiple ports
 - `3_progressbar.py` - OSC server with rich progress bar visualization
-- `4_udp_mulit_gui.py` - GUI-based OSC monitor using PySide6 and pyqtgraph
+- `4_udp_mulit_gui.py` - GUI-based OSC monitor using PySide6 and pyqtgraph (note: filename has typo)
 
 ## Coding Guidelines
 
@@ -43,7 +43,7 @@ This repository contains Python scripts for handling UDP/OSC (Open Sound Control
 - Use type conversion with try/except for OSC message values
 - Properly clean up server resources in `finally` blocks
 - For GUI apps, use Qt signals and slots for thread-safe communication
-- Use `deque` with `maxlen` for fixed-size buffers
+- Use `deque` from `collections` module with `maxlen` for fixed-size buffers
 
 ### Dependencies
 
