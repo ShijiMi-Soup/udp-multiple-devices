@@ -1,6 +1,9 @@
-# OSCサーバーとプログレスバーの実装チュートリアル
+# 複数台でUDP計測をする。
 
-このチュートリアルでは、OSC（Open Sound Control）サーバーを使用してデータを受信し、プログレスバーで可視化する方法を段階的に学習します。
+GoodBrain Web管理の吉川です。
+以前の記事で python-oscを用いて、UDP計測のデータをリアルタイムで取得する方法を説明しました。
+このチュートリアルでは、同じく python-oscを使用して、複数のデバイスから同時にかつリアルタイムにデータを取得する方法を説明します。
+最終的には、取得したデータをプログレスバーで可視化します。
 
 ## 目次
 
@@ -15,18 +18,18 @@
 
 ## 1. はじめに
 
-### OSC（Open Sound Control）とは？
+### 本記事の目的
 
-OSCは、音楽やマルチメディアアプリケーション間でリアルタイムにデータを送受信するためのプロトコルです。MIDIよりも柔軟で高速なデータ通信が可能です。
-
-### このプロジェクトの目的
-
-このプロジェクトでは、複数のデバイスからOSCメッセージを受信し、それぞれのデータをプログレスバーで可視化します。具体的には：
+この記事では、複数の脳波デバイスから、GoodBrain Focusアプリ経由でOSCメッセージを受信し、それぞれのデータをプログレスバーで可視化します。
+具体的には：
 
 - **Attention（集中度）**
 - **Meditation（瞑想度）**
 
 これらの値を受信して、リアルタイムで表示します。
+プログレスバーは、Richというライブラリをし、ターミナル（コマンドプロンプト）に表示させます。
+
+<!-- Todo: 完成イメージを貼る -->
 
 ---
 
@@ -37,27 +40,20 @@ OSCは、音楽やマルチメディアアプリケーション間でリアル�
 まず、必要なPythonパッケージをインストールします。
 
 ```bash
-pip install -r requirements.txt
-```
-
-`requirements.txt`の内容：
-```
-rich
-python-osc
+pip install rich pyhton-osc
 ```
 
 - **python-osc**: OSC通信を扱うためのライブラリ
-- **rich**: ターミナルに美しいプログレスバーを表示するためのライブラリ
+- **rich**: ターミナルにプログレスバーを表示するためのライブラリ
 
 ---
 
 ## 3. 基本的なOSCサーバー（1_base_server.py）
 
-### 概要
+最初のステップでは、シンプルなOSCサーバーを作成します。
+このサーバーは1つのポートでOSCメッセージを受信し、コンソールに表示します。
 
-最初のステップでは、シンプルなOSCサーバーを作成します。このサーバーは1つのポートでOSCメッセージを受信し、コンソールに表示します。
-
-### コードの解説
+まずは、ライブラリのインポートと、使用する変数の設定をしましょう。
 
 ```python
 from pythonosc.dispatcher import Dispatcher
@@ -75,23 +71,18 @@ addresses = [
 ```
 
 **設定部分の説明：**
-- `IP`: サーバーがリッスンするIPアドレス（ローカルホスト）
+- `IP`: サーバーがリッスンするIPアドレス（今回はローカルホスト）
 - `PORT`: サーバーがリッスンするポート番号
 - `addresses`: 受信するOSCアドレスのリスト
+
+    次に、OSCサーバーを作成するメインの処理を書いていきます。
 
 ```python
 # 関数 =========================
 
 def handler(address, *args):
     print(f"{address}: {args}")
-```
 
-**ハンドラー関数：**
-- OSCメッセージを受信したときに呼び出される関数
-- `address`: OSCアドレス（例："/Attention"）
-- `*args`: 受信したデータ（可変長引数）
-
-```python
 # メインの処理 =========================
 
 # アドレスと関数を紐付け 
@@ -104,6 +95,11 @@ print(f"OSCサーバ (ポート: {PORT}) ... Ctrl-Cで終了")
 server = ThreadingOSCUDPServer((IP, PORT), disp) # サーバーの作成
 server.serve_forever() # サーバーを起動（Ctrl+Cで終了）
 ```
+
+**ハンドラー関数：**
+- OSCメッセージを受信したときに呼び出される関数
+- `address`: OSCアドレス（例："/Attention"）
+- `*args`: 受信したデータ（可変長引数）
 
 **メイン処理の説明：**
 1. `Dispatcher`を作成：OSCアドレスとハンドラー関数を紐付けるオブジェクト
@@ -141,6 +137,7 @@ python -c "from pythonosc import udp_client; client = udp_client.SimpleUDPClient
 
 ### コードの解説
 
+まずは、インポートと変数設定の部分を修正していきます。
 ```python
 import asyncio
 from pythonosc.dispatcher import Dispatcher
@@ -158,24 +155,12 @@ addresses = [
 ```
 
 **設定の変更点：**
+- asyncioを新たにインポート
+- ThreadingOSCUDPServerの代わりにAsyncIOOSCUDPServerをインポート
 - `PORT`（単数）から`PORTS`（複数）に変更
 - 複数のポート番号をリストで定義
 
-```python
-# 関数 =========================
-
-def handler(address, *args):
-    print(f"{address}: {args}")
-
-# アドレスと関数を紐付け 
-disp = Dispatcher()
-for address in addresses:
-    disp.map(address, handler)
-```
-
-**ハンドラーとディスパッチャー：**
-- 基本的なサーバーと同じ構造
-- ただし、すべてのサーバーで共有される
+次にメインの処理を更新したいと思います。
 
 ```python
 # メインの処理 =========================
@@ -184,14 +169,7 @@ def create_osc_server(ip, port, dispatcher, loop):
     server =  AsyncIOOSCUDPServer((ip, port), dispatcher, loop)
     print(f"ポート {port} でOSCサーバーを作成しました。")
     return server
-```
 
-**サーバー作成関数：**
-- 各ポートに対してOSCサーバーを作成
-- `AsyncIOOSCUDPServer`を使用（非同期版）
-- `loop`パラメータで非同期イベントループを指定
-
-```python
 async def main():
     loop = asyncio.get_running_loop()
     assert isinstance(loop, asyncio.BaseEventLoop)
@@ -210,7 +188,15 @@ async def main():
         for endpoint in endpoints:
             transport, _ = endpoint
             transport.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
+
+**サーバー作成関数：**
+- 各ポートに対してOSCサーバーを作成
+- `AsyncIOOSCUDPServer`を使用（非同期版）
+- `loop`パラメータで非同期イベントループを指定
 
 **非同期メイン関数：**
 1. `asyncio.get_running_loop()`で現在の非同期イベントループを取得
@@ -218,11 +204,6 @@ async def main():
 3. `create_serve_endpoint()`で各サーバーのエンドポイントを作成（実際に通信開始）
 4. `asyncio.Event().wait()`で無限に待機（Ctrl+Cまで）
 5. 終了時にすべてのトランスポートをクローズ
-
-```python
-if __name__ == "__main__":
-    asyncio.run(main())
-```
 
 **プログラムの起動：**
 - `asyncio.run()`で非同期メイン関数を実行
